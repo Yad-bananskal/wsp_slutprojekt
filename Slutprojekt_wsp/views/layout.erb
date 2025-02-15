@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#128100; Användarparadiset</title>
+    <link rel="stylesheet" type="text/css" href="/style.css?<%= Time.now.to_i %>">
+</head>
+<body>
+    <header>
+        <img src="/img/affaren.jpg" alt="Banner">
+        <h1 class="logo">Användarparadiset</h1>
+    </header>
+    <hr>
+    <nav>
+        <ul>
+            <li><a href="/users">Alla användare</a></li>
+            <li><a href="/users/new">Ny användare</a></li>
+        </ul>
+    </nav>
+    <hr>
+    <%= yield %>
+    <hr>
+    <footer>
+        <p>Kontakta oss</p>
+    </footer>
+</body>
+</html>
