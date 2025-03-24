@@ -1,0 +1,23 @@
+<h1 style="text-align:center">Användarparadiset</h1>
+
+<form style="text-align:center" action="/welcome" method="POST">
+    <label>Username:</label>
+    <input type="text" name="username" required>
+    <br><br>
+
+    <label>Password:</label>
+    <input type="password" name="password" required>
+    <br><br>
+
+    <input type="submit" value="Login">
+
+    <% if @login_error %>
+      <h3 style="color: red;"><%= @login_error %></h3>
+    <% end %>
+</form>
+
+<br><br>
+
+<p style="text-align:center">
+    <a href="/users/signup">Create Account</a>
+</p>

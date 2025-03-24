@@ -1,0 +1,21 @@
+<h1 style="text-align:center">Edit Task</h1>
+
+<form style="text-align:center" action='/tasks/<%= @task.id %>' method="POST">
+  <input type="hidden" name="_method" value="PATCH">
+
+  <h4>Description</h4>
+  <textarea name="description" rows="8" cols="80"><%= @task.description %></textarea>
+
+  <br><br>
+
+  <h4>Due Date</h4>
+  <input type="date" name="due" value="<%= @task.due %>">
+
+  <br><br>
+
+  <input type="submit" value="Update">
+
+  <% if @create_error %>
+    <h3 style="color: red;"><%= @create_error %></h3>
+  <% end %>
+</form>

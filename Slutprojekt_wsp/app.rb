@@ -1,82 +1,172 @@
 require 'sinatra'
-require 'securerandom'
-require 'bcrypt'
 require 'sqlite3'
+require 'bcrypt'
+require 'securerandom'
 
 class App < Sinatra::Base
-
   configure do
+    set :public_folder, 'public'
+    set :views, 'views'
+    set :method_override, true
     enable :sessions
     set :session_secret, SecureRandom.hex(64)
   end
 
-  def db
-    @db ||= SQLite3::Database.new("db/users.sqlite")
-    @db.results_as_hash = true
-    @db
+  helpers do
+    def db
+      @db ||= SQLite3::Database.new("db/development.sqlite")
+      @db.results_as_hash = true
+      @db
+    end
+
+    def current_user
+      return nil unless logged_in?
+      db.execute('SELECT * FROM users WHERE id = ?', session[:user_id]).first
+    end
+
+    def logged_in?
+      !!session[:user_id]
+    end
   end
 
   get '/' do
-    if session[:user_id]
-      redirect '/admin'
+    redirect '/welcome'
+  end
+
+  #Sign Up
+  get '/users/signup' do
+    redirect to "/users/#{current_user[:id]}" if logged_in?
+    erb :'users/signup'
+  end
+
+  post '/users/signup' do
+    #Kolla om användarnamnet redan finns
+    existing_user = db.execute('SELECT * FROM users WHERE username = ?', [params[:username]]).first
+    if existing_user
+      @signup_error = "Username already exists, please try again"
+      return erb :'users/signup'
+    end
+
+    #Hasha lösenordet
+    hashed_password = BCrypt::Password.create(params[:password])
+
+    db.execute(
+      'INSERT INTO users (username, password_digest) VALUES (?, ?)',
+      [params[:username], hashed_password]
+    )
+
+    #Ställer in en session och redirectar
+    user_id = db.last_insert_row_id
+    session[:user_id] = user_id
+    redirect to "/users/#{user_id}"
+  end
+
+  #Login
+  get '/welcome' do
+    redirect to "/users/#{current_user[:id]}" if logged_in?
+    erb :'welcome'
+  end
+
+  post '/welcome' do
+    @user = db.execute('SELECT * FROM users WHERE username = ?', params[:username]).first
+
+    if @user && BCrypt::Password.new(@user['password_digest']) == params[:password]
+      session[:user_id] = @user['id']
+      redirect to "/users/#{@user['id']}"
     else
-      erb :index
+      @login_error = "Something went wrong! Please try again"
+      erb :'welcome'
     end
   end
 
-  post '/register' do
-    username = params[:username]
-    plain_password = params[:password]
+  #Visa användarvyn
+  get '/users/:id' do
+    redirect to "/" unless logged_in?
 
-    if username.empty? || plain_password.empty?
-      status 400
-      return "Username and password cannot be empty."
-    end
+    @user = db.execute('SELECT * FROM users WHERE id = ?', params[:id]).first
+    halt(404, "User not found") unless @user
 
-    hashed_password = BCrypt::Password.create(plain_password)
-    db.execute('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashed_password])
-    redirect '/login'
+    @tasks = db.execute('SELECT * FROM tasks WHERE user_id = ?', @user['id'])
+    erb :'users/show'
   end
 
-  get '/login' do
-    erb :login
-  end
-
-  post '/login' do
-    username = params[:username]
-    plain_password = params[:password]
-
-    user = db.execute('SELECT * FROM users WHERE username = ?', [username]).first
-
-    if user && BCrypt::Password.new(user['password']) == plain_password
-      session[:user_id] = user['id']
-      redirect '/admin'
-    else
-      status 401
-      "Invalid username or password"
-    end
-  end
-
-  get '/admin' do
-    if session[:user_id]
-      erb :admin
-    else
-      redirect '/unauthorized'
-    end
-  end
-
-  get '/unauthorized' do
-    erb :unauthorized
-  end
-
-  get '/logout' do
+  #Logout
+  post '/logout' do
     session.clear
-    redirect '/'
+    redirect to "/"
   end
 
-  get '/users' do
-    @users = User.all # This fetches all users from the database
-    erb :index # Render the index.erb view
+  #Ny uppgift/task
+  get '/tasks/new' do
+    redirect to "/" unless logged_in?
+
+    @user = current_user
+    erb :'tasks/new'
   end
-  
+
+  #Create task
+  post '/tasks' do
+    redirect to "/" unless logged_in?
+
+    @user = current_user
+
+    if params[:description].empty?
+      @create_error = "Description can't be empty"
+      return erb :'tasks/new'
+    end
+
+    db.execute(
+      'INSERT INTO tasks (description, due, status, user_id) VALUES (?, ?, ?, ?)',
+      [params[:description], params[:due], params[:status], @user['id']]
+    )
+
+    redirect to "/users/#{@user['id']}"
+  end
+
+  #Show task
+  get '/tasks/:id' do
+    redirect to "/" unless logged_in?
+
+    @task = db.execute('SELECT * FROM tasks WHERE id = ?', params[:id]).first
+    halt(404, "Task not found") unless @task
+
+    erb :'tasks/show'
+  end
+
+  #Edit task
+  get '/tasks/:id/edit' do
+    redirect to "/" unless logged_in?
+
+    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [params[:id], current_user['id']]).first
+    halt(404, "Task not found") unless @task
+
+    erb :'tasks/edit'
+  end
+
+  #Update task
+  patch '/tasks/:id' do
+    redirect to "/" unless logged_in?
+
+    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', params[:id], current_user['id']).first
+    halt(404, "Task not found") unless @task
+
+    db.execute(
+      'UPDATE tasks SET description = ?, due = ?, status = ? WHERE id = ?',
+      params[:description], params[:due], params[:status], params[:id]
+    )
+
+    redirect to "/users/#{current_user['id']}"
+  end
+
+  #Delete task
+  delete '/tasks/:id' do
+    redirect to "/" unless logged_in?
+
+    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', params[:id], current_user['id']).first
+    halt(404, "Task not found") unless @task
+
+    db.execute('DELETE FROM tasks WHERE id = ?', params[:id])
+
+    redirect to "/users/#{current_user['id']}"
+  end
 end

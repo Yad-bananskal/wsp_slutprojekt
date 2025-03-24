@@ -1,0 +1,17 @@
+<h1 style="text-align:center">Sign Up</h1>
+
+<form style="text-align:center" action='/users/signup' method="POST">
+  <label>Username:</label>
+  <input type="text" name="username" required>
+  <br><br>
+
+  <label>Password:</label>
+  <input type="password" name="password" required>
+  <br><br>
+
+  <input type="submit" value="Signup">
+
+  <% if @signup_error %>
+    <h3 style="color: red;"><%= @signup_error %></h3>
+  <% end %>
+</form>

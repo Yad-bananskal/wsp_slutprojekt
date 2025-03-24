@@ -1,28 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>&#128100; Användarparadiset</title>
-    <link rel="stylesheet" type="text/css" href="/style.css?<%= Time.now.to_i %>">
+    <link rel="stylesheet" href="/stylesheets/main.css">
 </head>
 <body>
-    <header>
-        <img src="/img/affaren.jpg" alt="Banner">
-        <h1 class="logo">Användarparadiset</h1>
-    </header>
-    <hr>
-    <nav>
-        <ul>
-            <li><a href="/users">Alla användare</a></li>
-            <li><a href="/users/new">Ny användare</a></li>
-        </ul>
-    </nav>
-    <hr>
-    <%= yield %>
-    <hr>
-    <footer>
-        <p>Kontakta oss</p>
+    <div class="wrapper">
+        <%= yield %>
+    </div>
+
+    <footer class="branding" style="text-align:left">
+        <small>&copy; <%= Time.now.year %> <strong>Taskx</strong></small>
     </footer>
+
+    <% if defined?(current_user) && current_user %>
+      <a href="/logout">Logout</a>
+    <% end %>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
 </body>
 </html>

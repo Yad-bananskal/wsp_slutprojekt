@@ -1,0 +1,25 @@
+<h1>Welcome, <%= @user['username'] %></h1>
+
+<h3><a href="/tasks/new">New Task</a></h3>
+
+<h2>Your Tasks</h2>
+
+<% @tasks.each do |task| %>
+  <h3>
+    <div class="actions">
+      <form action="/tasks/<%= task['id'] %>/edit" method="GET">
+        <button type="submit">Edit</button>
+      </form>
+
+      <form action="/tasks/<%= task['id'] %>" method="POST">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit">Delete Task</button>
+      </form>
+
+      <br>
+      <strong>Description:</strong> <%= task['description'] %><br>
+      <strong>Due:</strong> <%= task['due'] %><br>
+    </div>
+  </h3>
+  <hr>
+<% end %>
