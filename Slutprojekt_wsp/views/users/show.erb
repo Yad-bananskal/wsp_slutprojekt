@@ -1,25 +1,19 @@
-<h1>Welcome, <%= @user['username'] %></h1>
-
-<h3><a href="/tasks/new">New Task</a></h3>
-
-<h2>Your Tasks</h2>
-
-<% @tasks.each do |task| %>
-  <h3>
-    <div class="actions">
-      <form action="/tasks/<%= task['id'] %>/edit" method="GET">
-        <button type="submit">Edit</button>
-      </form>
-
-      <form action="/tasks/<%= task['id'] %>" method="POST">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit">Delete Task</button>
-      </form>
-
-      <br>
-      <strong>Description:</strong> <%= task['description'] %><br>
-      <strong>Due:</strong> <%= task['due'] %><br>
+<div class="user-profile">
+  <h1>Välkommen, <%= @user['username'] %></h1>
+  
+  <div class="user-content">
+    <div class="user-info">
+      <p>Kontouppgifter:</p>
+      <ul>
+        <li>Användarnamn: <%= @user['username'] %></li>
+      </ul>
     </div>
-  </h3>
-  <hr>
-<% end %>
+    
+    <div class="user-actions">
+      <a href="/cart" class="btn">Visa kundvagn (<%= cart_item_count %>)</a>
+      <form action="/logout" method="post">
+        <button type="submit" class="btn">Logga ut</button>
+      </form>
+    </div>
+  </div>
+</div>

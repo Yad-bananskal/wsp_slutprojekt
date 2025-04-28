@@ -2,73 +2,100 @@ require 'sqlite3'
 require 'bcrypt'
 
 class Seeder
+
   def self.seed!
-    puts "Seeding database..."
-
-    # Connect to the database
-    db = SQLite3::Database.new "db/development.sqlite"
-    db.results_as_hash = true
-
-    # Enable foreign keys in SQLite
-    db.execute "PRAGMA foreign_keys = ON;"
-
-    # Drop existing tables
-    drop_tables(db)
-
-    # Create tables
-    create_tables(db)
-
-    # Populate tables with data
-    populate_tables(db)
-
-    puts "Database seeded successfully."
+    drop_tables
+    create_tables
+    populate_tables
   end
 
-  def self.drop_tables(db)
-    db.execute('DROP TABLE IF EXISTS users')
-    db.execute('DROP TABLE IF EXISTS tasks')
+  def self.drop_tables
+    ['cart_items', 'carts', 'products', 'categories', 'users'].each do |table|
+      db.execute("DROP TABLE IF EXISTS #{table}")
+      p "Dropped table #{table}"
+    end
   end
 
-  def self.create_tables(db)
-    # Create the users table (without the email column)
-    db.execute <<-SQL
-      CREATE TABLE IF NOT EXISTS users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT NOT NULL UNIQUE,
-          password_digest TEXT NOT NULL
-      );
-    SQL
+  def self.create_tables
+    db.execute('CREATE TABLE users (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  username TEXT NOT NULL UNIQUE,
+                  password_digest TEXT NOT NULL,
+                  role TEXT DEFAULT "user")')
 
-    # Create the tasks table
-    db.execute <<-SQL
-      CREATE TABLE IF NOT EXISTS tasks (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          description TEXT,
-          user_id INTEGER,
-          due TEXT,
-          status TEXT,
-          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      );
-    SQL
+    db.execute('CREATE TABLE categories (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL UNIQUE)')
+
+    db.execute('CREATE TABLE products (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  description TEXT,
+                  price REAL NOT NULL,
+                  stock INTEGER DEFAULT 0,
+                  category_id INTEGER,
+                  FOREIGN KEY(category_id) REFERENCES categories(id))')
+
+    db.execute('CREATE TABLE carts (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  user_id INTEGER NOT NULL,
+                  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE)')
+
+    db.execute('CREATE TABLE cart_items (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  cart_id INTEGER NOT NULL,
+                  product_id INTEGER NOT NULL,
+                  quantity INTEGER NOT NULL DEFAULT 1,
+                  FOREIGN KEY(cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+                  FOREIGN KEY(product_id) REFERENCES products(id))')
+
+    p "All tables created."
   end
 
-  def self.populate_tables(db)
-    # Insert sample users (without email)
-    db.execute "INSERT INTO users (username, password_digest) VALUES (?, ?)", ["alice", "hashed_password_1"]
-    db.execute "INSERT INTO users (username, password_digest) VALUES (?, ?)", ["bob", "hashed_password_2"]
+  def self.populate_tables
+    users = [
+      { username: 'admin', password: 'admin123', role: 'admin' },
+      { username: 'Yad', password: 'password123', role: 'user' },
+      { username: 'Päronmannen', password: 'password123', role: 'user' },
+      { username: 'John Doe', password: 'password123', role: 'user' }
+    ]
 
-    # Insert sample tasks
-    db.execute "INSERT INTO tasks (description, user_id, due, status) VALUES (?, ?, ?, ?)", ["Buy groceries", 1, "2025-02-20", "pending"]
-    db.execute "INSERT INTO tasks (description, user_id, due, status) VALUES (?, ?, ?, ?)", ["Finish project", 2, "2025-02-25", "in-progress"]
+    users.each do |u|
+      hashed_pw = BCrypt::Password.create(u[:password])
+      p "Saving user #{u[:username]} with hashed password."
+      db.execute('INSERT INTO users (username, password_digest, role) VALUES (?, ?, ?)', 
+                 [u[:username], hashed_pw, u[:role]])
+    end
 
-    # Insert additional users with hashed passwords (without email)
-    password_hashed = BCrypt::Password.create("123")
-    puts "Storing hashed version of password to db. Clear text never saved. #{password_hashed}"
-    db.execute('INSERT INTO users (username, password_digest) VALUES (?, ?)', ['Yad', password_hashed])
-    db.execute('INSERT INTO users (username, password_digest) VALUES (?, ?)', ['Päronmannen', password_hashed])
-    db.execute('INSERT INTO users (username, password_digest) VALUES (?, ?)', ['John Doe', password_hashed])
+    ['Avgassystem', 'Fälgar', 'Däck'].each do |category_name|
+      db.execute('INSERT INTO categories (name) VALUES (?)', [category_name])
+      p "Inserted category #{category_name}"
+    end
+
+    products = [
+      { name: 'Sportavgassystem', description: 'Sportigt avgassystem i titan', price: 2499, stock: 5, category_id: 1 },
+      { name: 'Fälg 18 tum', description: 'Aluminiumfälg 18 tum', price: 1290, stock: 8, category_id: 2 },
+      { name: 'Vinterdäck 225/45R17', description: 'Dubbdäck för vinterväglag', price: 899, stock: 12, category_id: 3 }
+    ]
+
+    products.each do |p|
+      db.execute('INSERT INTO products (name, description, price, stock, category_id) VALUES (?, ?, ?, ?, ?)', 
+                 [p[:name], p[:description], p[:price], p[:stock], p[:category_id]])
+      p "Added product #{p[:name]}"
+    end
+
+    p "Finished populating data."
+  end
+
+  private
+
+  def self.db
+    return @db if @db
+    @db = SQLite3::Database.new('db/development.sqlite')
+    @db.results_as_hash = true
+    @db.execute('PRAGMA foreign_keys = ON;')
+    @db
   end
 end
 
-# Run the seeder
 Seeder.seed!

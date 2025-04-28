@@ -1,69 +1,515 @@
+/* ====================== */
+/* Base Styles */
+/* ====================== */
 body {
-  font-family: sans-serif;
-  color: #666;
-  background-color: #F1F1F1;
-  font-size: x-large;
-  margin: 1em;
-}
-
-strong {
-  color: black;
-}
-
-a {
-  color: #008080;
-}
-
-form {
-  display: inline-block;
-}
-
-img {
-  max-width: 100%;
-}
-
-nav ul {
-  list-style-type: none;
-  padding: 0;
   margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  line-height: 1.6;
 }
 
-nav ul li {
-  display: inline-block;
-  margin-right: 0.5em;
+.wrapper {
+  max-width: 960px;
+  margin: auto;
+  padding: 1rem;
 }
 
-nav ul li a {
+/* ====================== */
+/* Navigation */
+/* ====================== */
+nav {
+  background-color: #1e1e1e;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+
+.nav-left, .nav-right {
+  display: flex;
+  gap: 1rem;
+}
+
+nav a, nav button, .nav-button {
+  color: #e0e0e0;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+}
+
+nav a:hover, nav button:hover, .nav-button:hover {
+  color: #90caf9;
+}
+
+.nav-button {
+  background-color: #4a6fa5;
+  border-radius: 4px;
+}
+
+.nav-button:hover {
+  background-color: #3a5a8f;
+  color: white;
+}
+
+/* ====================== */
+/* Typography */
+/* ====================== */
+h1, h2, h3 {
+  color: #ffffff;
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+/* ====================== */
+/* Forms & Buttons */
+/* ====================== */
+button, input[type="submit"], 
+.profile-button, .admin-btn, 
+.checkout-button, .submit-btn {
+  background-color: #2196f3;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover, input[type="submit"]:hover,
+.profile-button:hover, .admin-btn:hover,
+.checkout-button:hover, .submit-btn:hover {
+  background-color: #1976d2;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+  padding: 0.5rem;
+  background-color: #2c2c2c;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+input:focus, textarea:focus, button:focus {
+  outline: 2px solid #90caf9;
+  outline-offset: 2px;
+}
+
+/* ====================== */
+/* Product Styles */
+/* ====================== */
+.product-list, .product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.product-card, .admin-product-card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.product-card h3 a {
+  color: #90caf9;
   text-decoration: none;
 }
 
-nav ul li a:hover {
+.product-card h3 a:hover {
   text-decoration: underline;
 }
 
-header {
+.product-card strong {
+  color: #4caf50;
+  font-size: 1.2rem;
+}
+
+/* ====================== */
+/* Utility Classes */
+/* ====================== */
+.centered {
+  text-align: center;
+}
+
+.error-message {
+  color: #f44336;
+  margin: 0.5rem 0;
+}
+
+.flash-notice {
+  padding: 1rem;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+/* ====================== */
+/* Layout Components */
+/* ====================== */
+footer {
+  padding: 1rem;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+hr {
+  border: 1px solid #444;
+  margin: 2rem 0;
+}
+
+/* ====================== */
+/* Category Buttons */
+/* ====================== */
+.category-buttons {
   display: flex;
-  margin-bottom: 1em;
-  align-items: flex-end;
-  gap: 1em;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
 }
 
-.logo {
-  font-weight: 100;
-  text-transform: capitalize;
-  font-family: cursive;
-  color: coral;
-  margin: 0;
+.category-buttons button {
+  padding: 0.75rem 1.5rem;
 }
 
-.logo a {
+/* ====================== */
+/* Admin Panel Styles */
+/* ====================== */
+.admin-container, .profile-container,
+.auth-form, .admin-form-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.admin-welcome {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.admin-actions, .profile-actions,
+.form-actions, .cart-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-btn {
+  padding: 0.75rem 1.5rem;
   text-decoration: none;
 }
 
-blockquote {
-  background-color: salmon;
-  color: black;
-  padding: 2em;
-  margin: 0;
-  font-family: 'Courier New', Courier, monospace;
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.edit-btn, .delete-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: #121212;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+/* ====================== */
+/* Profile & Auth Styles */
+/* ====================== */
+.profile-info, .form-group {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background-color: #2c2c2c;
+  border-radius: 5px;
+}
+
+.profile-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+}
+
+.admin-profile-button {
+  background-color: #d4a017;
+}
+
+.admin-profile-button:hover {
+  background-color: #c49010;
+}
+
+.auth-form {
+  max-width: 400px;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #90caf9;
+}
+
+/* ====================== */
+/* Cart Styles */
+/* ====================== */
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.cart-table th, .cart-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.cart-table th {
+  background-color: #2c2c2c;
+}
+
+.cart-total {
+  font-weight: bold;
+  background-color: #2c2c2c;
+}
+
+.checkout-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.empty-cart-message {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+/* ====================== */
+/* Navigation Enhancements */
+/* ====================== */
+.nav-logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.nav-link {
+  padding: 0.5rem 1rem;
+  color: #e0e0e0;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: #90caf9;
+}
+
+.cart-button {
+  position: relative;
+  padding-right: 2rem;
+}
+
+.cart-count {
+  position: absolute;
+  top: -0.5rem;
+  right: 0.5rem;
+  background-color: #f44336;
+  color: white;
+  border-radius: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* ====================== */
+/* Product Detail Page */
+/* ====================== */
+.product-detail {
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+.product-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.product-image {
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  aspect-ratio: 1/1;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.product-price {
+  font-size: 1.5rem;
+  color: #4caf50;
+  margin: 1rem 0;
+}
+
+.product-stock {
+  color: #90caf9;
+  margin-bottom: 1.5rem;
+}
+
+.add-to-cart-form {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.add-to-cart-form input {
+  width: 60px;
+  text-align: center;
+}
+
+.add-to-cart-button {
+  background-color: #4caf50;
+  padding: 0.75rem 1.5rem;
+}
+
+.add-to-cart-button:hover {
+  background-color: #3d8b40;
+}
+
+.login-prompt {
+  color: #f44336;
+  margin-top: 2rem;
+}
+
+.back-button {
+  display: inline-block;
+  margin-top: 2rem;
+  color: #90caf9;
+  text-decoration: none;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}
+
+/* ====================== */
+/* Auth Page Styling */
+/* ====================== */
+.auth-container {
+  max-width: 400px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.auth-form {
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
+
+.auth-link {
+  margin-top: 1.5rem;
+  color: #e0e0e0;
+}
+
+.auth-link a {
+  color: #90caf9;
+  text-decoration: none;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+/* Cart Page Styles */
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.cart-table th, .cart-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.cart-table th {
+  background-color: #2c2c2c;
+}
+
+.cart-total {
+  font-weight: bold;
+  background-color: #2c2c2c;
+}
+
+.cart-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.checkout-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.checkout-button:hover {
+  background-color: #3d8b40;
+}
+
+.back-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #2196f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
 }

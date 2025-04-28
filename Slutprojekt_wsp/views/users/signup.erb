@@ -1,17 +1,20 @@
-<h1 style="text-align:center">Sign Up</h1>
-
-<form style="text-align:center" action='/users/signup' method="POST">
-  <label>Username:</label>
-  <input type="text" name="username" required>
-  <br><br>
-
-  <label>Password:</label>
-  <input type="password" name="password" required>
-  <br><br>
-
-  <input type="submit" value="Signup">
-
+<div class="auth-form">
+  <h2>Skapa konto</h2>
+  
   <% if @signup_error %>
-    <h3 style="color: red;"><%= @signup_error %></h3>
+    <div class="error-message"><%= @signup_error %></div>
   <% end %>
-</form>
+
+  <form action="/users/signup" method="POST">
+    <label for="new-username">Användarnamn:</label>
+    <input type="text" id="new-username" name="username" required>
+    
+    <label for="new-password">Lösenord:</label>
+    <input type="password" id="new-password" name="password" required>
+    
+    <div class="auth-actions">
+      <input type="submit" value="Registrera">
+      <a href="/welcome" class="secondary-action">Har du redan ett konto?</a>
+    </div>
+  </form>
+</div>

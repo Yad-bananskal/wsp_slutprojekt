@@ -1,23 +1,24 @@
-<h1 style="text-align:center">Användarparadiset</h1>
+<div class="auth-form">
+  <h2>Logga in</h2>
 
-<form style="text-align:center" action="/welcome" method="POST">
-    <label>Username:</label>
-    <input type="text" name="username" required>
-    <br><br>
+  <% if @login_error %>
+    <div class="error-message"><%= @login_error %></div>
+  <% end %>
 
-    <label>Password:</label>
-    <input type="password" name="password" required>
-    <br><br>
+  <form action="/welcome" method="POST">
+    <label for="username">Användarnamn:</label>
+    <input type="text" id="username" name="username" required <%= "disabled" if @cooldown_remaining && @cooldown_remaining > 0 %>>
 
-    <input type="submit" value="Login">
+    <label for="password">Lösenord:</label>
+    <input type="password" id="password" name="password" required <%= "disabled" if @cooldown_remaining && @cooldown_remaining > 0 %>>
 
-    <% if @login_error %>
-      <h3 style="color: red;"><%= @login_error %></h3>
-    <% end %>
-</form>
-
-<br><br>
-
-<p style="text-align:center">
-    <a href="/users/signup">Create Account</a>
-</p>
+    <div class="auth-actions">
+      <% if @cooldown_remaining && @cooldown_remaining > 0 %>
+        <input type="submit" value="Vänta <%= @cooldown_remaining %> sekunder" disabled>
+      <% else %>
+        <input type="submit" value="Logga in">
+      <% end %>
+      <a href="/users/signup" class="secondary-action">Skapa konto</a>
+    </div>
+  </form>
+</div>

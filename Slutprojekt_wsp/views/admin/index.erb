@@ -1,13 +1,31 @@
-<h1>Admin</h1>
+<div class="admin-container">
+  <h1>Adminpanel</h1>
+  <p class="admin-welcome">Välkommen <strong><%= @current_user['username'] %></strong></p>
+  
+  <div class="admin-actions">
+    <a href="/admin/products/new" class="admin-btn">Lägg till ny produkt</a>
+    <a href="/admin/categories" class="admin-btn">Hantera kategorier</a>
+  </div>
 
-<p>Du är inloggad som admin</p>
-
-<p>Testa att bcrypta ett lösenord</p>
-
-<p><code>password_hashed = BCrypt::Password.create("123")</code></p>
-
-<form action="/testpwcreate" method="POST">
-  <label>Plain password:
-    <input type="text" value="a-password" name="plainpassword" id="plainpassword" required></label>
-  <button type="submit">bcrypta</button>
-</form>
+  <h2>Alla produkter</h2>
+  
+  <div class="product-grid">
+    <% @products.each do |product| %>
+      <div class="admin-product-card">
+        <div class="product-info">
+          <h3><%= product['name'] %></h3>
+          <p><%= product['price'] %> kr</p>
+          <p>Lager: <%= product['stock'] %></p>
+        </div>
+        
+        <div class="product-actions">
+          <a href="/admin/products/<%= product['id'] %>/edit" class="edit-btn">Redigera</a>
+          <form action="/admin/products/<%= product['id'] %>" method="POST">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="delete-btn">Radera</button>
+          </form>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

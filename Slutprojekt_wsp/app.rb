@@ -9,164 +9,279 @@ class App < Sinatra::Base
     set :views, 'views'
     set :method_override, true
     enable :sessions
-    set :session_secret, SecureRandom.hex(64)
+    set :session_secret, SecureRandom.hex(64) 
+
+    db = SQLite3::Database.new("db/development.sqlite")
+    begin
+      db.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
+    rescue SQLite3::SQLException => e
+    end
   end
 
   helpers do
-    def db
-      @db ||= SQLite3::Database.new("db/development.sqlite")
-      @db.results_as_hash = true
-      @db
+    def db_conn
+      @db_conn ||= begin
+        db = SQLite3::Database.new("db/development.sqlite")
+        db.results_as_hash = true
+        db
+      end
     end
 
     def current_user
-      return nil unless logged_in?
-      db.execute('SELECT * FROM users WHERE id = ?', session[:user_id]).first
+      return unless session[:user_id]
+      db_conn.execute('SELECT * FROM users WHERE id = ?', session[:user_id]).first
     end
 
     def logged_in?
       !!session[:user_id]
     end
+
+    def admin_user?
+      logged_in? && current_user['role'] == 'admin'
+    end
+
+    def total_cart_items
+      return 0 unless logged_in?
+      
+      cart = db_conn.execute('SELECT id FROM carts WHERE user_id = ?', [current_user['id']]).first
+      return 0 unless cart
+      
+      count = db_conn.execute('SELECT SUM(quantity) FROM cart_items WHERE cart_id = ?', [cart['id']]).dig(0, 0)
+      count ||= 0
+    end
   end
 
   get '/' do
-    redirect '/welcome'
+    redirect to '/shop'
   end
 
-  #Sign Up
+  get '/unauthorized' do
+    erb :unauthorized
+  end
+
   get '/users/signup' do
-    redirect to "/users/#{current_user[:id]}" if logged_in?
+    redirect to "/users/#{current_user['id']}" if logged_in?
     erb :'users/signup'
   end
 
   post '/users/signup' do
-    #Kolla om användarnamnet redan finns
-    existing_user = db.execute('SELECT * FROM users WHERE username = ?', [params[:username]]).first
-    if existing_user
-      @signup_error = "Username already exists, please try again"
+    if params[:username].to_s.strip.empty? || params[:password].to_s.strip.empty?
+      @signup_error = "Don't leave username or password blank!"
       return erb :'users/signup'
     end
 
-    #Hasha lösenordet
-    hashed_password = BCrypt::Password.create(params[:password])
+    existing_user = db_conn.execute('SELECT * FROM users WHERE username = ?', params[:username]).first
+    if existing_user
+      @signup_error = "That username is taken. Try again."
+      return erb :'users/signup'
+    end
 
-    db.execute(
-      'INSERT INTO users (username, password_digest) VALUES (?, ?)',
-      [params[:username], hashed_password]
-    )
+    #skapa ny användare
+    pw_digest = BCrypt::Password.create(params[:password])
+    db_conn.execute('INSERT INTO users (username, password_digest, role) VALUES (?, ?, ?)', [params[:username], pw_digest, 'user'])
+    session[:user_id] = db_conn.last_insert_row_id
 
-    #Ställer in en session och redirectar
-    user_id = db.last_insert_row_id
-    session[:user_id] = user_id
-    redirect to "/users/#{user_id}"
+    redirect to "/users/#{session[:user_id]}"
   end
 
-  #Login
   get '/welcome' do
-    redirect to "/users/#{current_user[:id]}" if logged_in?
-    erb :'welcome'
+    if logged_in?
+      dest = admin_user? ? '/admin' : "/users/#{current_user['id']}"
+      redirect to dest
+    else
+      if session[:login_cooldown] && Time.now < session[:login_cooldown]
+        @cooldown_remaining = (session[:login_cooldown] - Time.now).to_i
+        @login_error = "För många misslyckade försök. Vänta #{@cooldown_remaining} sekunder."
+      end
+      erb :welcome
+    end
   end
+  
 
   post '/welcome' do
-    @user = db.execute('SELECT * FROM users WHERE username = ?', params[:username]).first
-
-    if @user && BCrypt::Password.new(@user['password_digest']) == params[:password]
-      session[:user_id] = @user['id']
-      redirect to "/users/#{@user['id']}"
+    session[:failed_logins] ||= 0
+    cooldown_time = 60 # seconds
+  
+    # Check if cooldown is active
+    if session[:login_cooldown] && Time.now < session[:login_cooldown]
+      @cooldown_remaining = (session[:login_cooldown] - Time.now).to_i
+      @login_error = "För många misslyckade försök. Vänta #{@cooldown_remaining} sekunder."
+      return erb :welcome
+    end
+  
+    user = db_conn.execute('SELECT * FROM users WHERE username = ?', params[:username]).first
+  
+    if user && BCrypt::Password.new(user['password_digest']) == params[:password]
+      session[:user_id] = user['id']
+      session[:failed_logins] = 0
+      session.delete(:login_cooldown)
+      redirect to(user['role'] == 'admin' ? '/admin' : "/users/#{user['id']}")
     else
-      @login_error = "Something went wrong! Please try again"
-      erb :'welcome'
+      session[:failed_logins] += 1
+  
+      if session[:failed_logins] >= 3
+        session[:login_cooldown] = Time.now + cooldown_time
+        @cooldown_remaining = cooldown_time
+        @login_error = "För många misslyckade försök. Vänta #{@cooldown_remaining} sekunder."
+      else
+        @login_error = "Fel användarnamn eller lösenord. Försök #{session[:failed_logins]} av 3."
+      end
+  
+      erb :welcome
     end
   end
+  
 
-  #Visa användarvyn
-  get '/users/:id' do
-    redirect to "/" unless logged_in?
-
-    @user = db.execute('SELECT * FROM users WHERE id = ?', params[:id]).first
-    halt(404, "User not found") unless @user
-
-    @tasks = db.execute('SELECT * FROM tasks WHERE user_id = ?', @user['id'])
-    erb :'users/show'
-  end
-
-  #Logout
+  #utloggnig routes
   post '/logout' do
     session.clear
-    redirect to "/"
+    redirect to '/'
   end
 
-  #Ny uppgift/task
-  get '/tasks/new' do
-    redirect to "/" unless logged_in?
-
-    @user = current_user
-    erb :'tasks/new'
+  #webbshop
+  get '/shop' do
+    @products = db_conn.execute('SELECT * FROM products')
+    erb :'shop/index'
   end
 
-  #Create task
-  post '/tasks' do
-    redirect to "/" unless logged_in?
+  get '/shop/:id' do
+    @product = db_conn.execute('SELECT * FROM products WHERE id = ?', params[:id]).first
+    halt 404, "Whoops, product not found" unless @product
+    erb :'shop/show'
+  end
 
-    @user = current_user
+  #kundvagn
+  get '/cart' do
+    redirect to '/welcome' unless logged_in?
 
-    if params[:description].empty?
-      @create_error = "Description can't be empty"
-      return erb :'tasks/new'
+    user_cart = db_conn.execute('SELECT id FROM carts WHERE user_id = ?', current_user['id']).dig(0, 'id')
+    
+    if user_cart
+      @cart_items = db_conn.execute(<<-SQL, user_cart)
+        SELECT products.id, products.name, products.price, cart_items.quantity
+        FROM cart_items
+        JOIN products ON cart_items.product_id = products.id
+        WHERE cart_items.cart_id = ?
+      SQL
+      
+      @total_price = @cart_items.map { |item| item['price'] * item['quantity'] }.sum
+    else
+      @cart_items = []
+      @total_price = 0
     end
 
-    db.execute(
-      'INSERT INTO tasks (description, due, status, user_id) VALUES (?, ?, ?, ?)',
-      [params[:description], params[:due], params[:status], @user['id']]
-    )
-
-    redirect to "/users/#{@user['id']}"
+    erb :'cart/index'
   end
 
-  #Show task
-  get '/tasks/:id' do
-    redirect to "/" unless logged_in?
+  post '/cart/add/:id' do
+    redirect to '/welcome' unless logged_in?
 
-    @task = db.execute('SELECT * FROM tasks WHERE id = ?', params[:id]).first
-    halt(404, "Task not found") unless @task
+    item_id = params[:id].to_i
+    qty = (params[:quantity] || 1).to_i
 
-    erb :'tasks/show'
+    product = db_conn.execute('SELECT * FROM products WHERE id = ?', item_id).first
+    halt 404, "Item doesn't exist" unless product
+
+    user_cart = db_conn.execute('SELECT * FROM carts WHERE user_id = ?', current_user['id']).first
+
+    if user_cart.nil?
+      db_conn.execute('INSERT INTO carts (user_id) VALUES (?)', [current_user['id']])
+      cart_id = db_conn.last_insert_row_id
+    else
+      cart_id = user_cart['id']
+    end
+
+    already_in_cart = db_conn.execute('SELECT * FROM cart_items WHERE cart_id = ? AND product_id = ?', [cart_id, item_id]).first
+
+    if already_in_cart
+      db_conn.execute('UPDATE cart_items SET quantity = quantity + ? WHERE id = ?', [qty, already_in_cart['id']])
+    else
+      db_conn.execute('INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)', [cart_id, item_id, qty])
+    end
+
+    redirect to(request.referer || '/shop')
   end
 
-  #Edit task
-  get '/tasks/:id/edit' do
-    redirect to "/" unless logged_in?
+  post '/cart/remove/:id' do
+    redirect to '/welcome' unless logged_in?
 
-    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [params[:id], current_user['id']]).first
-    halt(404, "Task not found") unless @task
+    user_cart = db_conn.execute('SELECT id FROM carts WHERE user_id = ?', current_user['id']).first
 
-    erb :'tasks/edit'
+    if user_cart
+      db_conn.execute('DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?', [user_cart['id'], params[:id].to_i])
+    end
+
+    redirect to '/cart'
   end
 
-  #Update task
-  patch '/tasks/:id' do
-    redirect to "/" unless logged_in?
+  post '/cart/checkout' do
+    redirect to '/welcome' unless logged_in?
 
-    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', params[:id], current_user['id']).first
-    halt(404, "Task not found") unless @task
-
-    db.execute(
-      'UPDATE tasks SET description = ?, due = ?, status = ? WHERE id = ?',
-      params[:description], params[:due], params[:status], params[:id]
-    )
-
-    redirect to "/users/#{current_user['id']}"
+    cart_id = db_conn.execute('SELECT id FROM carts WHERE user_id = ?', current_user['id']).dig(0, 'id')
+    if cart_id
+      db_conn.execute('DELETE FROM cart_items WHERE cart_id = ?', [cart_id])
+      erb :'cart/checkout'
+    else
+      redirect to '/cart'
+    end
   end
 
-  #Delete task
-  delete '/tasks/:id' do
-    redirect to "/" unless logged_in?
+  #Admin panel 
+  get '/admin' do
+    redirect to '/unauthorized' unless admin_user?
+    @current_user = current_user
+    @products = db_conn.execute('SELECT * FROM products')
+    erb :'admin/index'
+  end
 
-    @task = db.execute('SELECT * FROM tasks WHERE id = ? AND user_id = ?', params[:id], current_user['id']).first
-    halt(404, "Task not found") unless @task
+  get '/admin/products/new' do
+    redirect to '/unauthorized' unless admin_user?
+    @categories = db_conn.execute('SELECT * FROM categories')
+    erb :'admin/new'
+  end
 
-    db.execute('DELETE FROM tasks WHERE id = ?', params[:id])
+  post '/admin/products' do
+    redirect to '/unauthorized' unless admin_user?
 
-    redirect to "/users/#{current_user['id']}"
+    missing_fields = [:name, :price, :category_id].select { |field| params[field].to_s.strip.empty? }
+    halt 400, "Missing: #{missing_fields.join(', ')}" unless missing_fields.empty?
+
+    db_conn.execute('INSERT INTO products (name, description, price, stock, category_id) VALUES (?, ?, ?, ?, ?)',
+                    [params[:name], params[:description], params[:price].to_f, params[:stock].to_i, params[:category_id].to_i])
+
+    redirect to '/admin'
+  end
+
+  get '/admin/products/:id/edit' do
+    redirect to '/unauthorized' unless admin_user?
+    @product = db_conn.execute('SELECT * FROM products WHERE id = ?', params[:id]).first
+    halt 404, "Can't find that product" unless @product
+    @categories = db_conn.execute('SELECT * FROM categories')
+    erb :'admin/edit'
+  end
+
+  patch '/admin/products/:id' do
+    redirect to '/unauthorized' unless admin_user?
+
+    db_conn.execute('UPDATE products SET name = ?, description = ?, price = ?, stock = ?, category_id = ? WHERE id = ?',
+                    [params[:name], params[:description], params[:price].to_f, params[:stock].to_i, params[:category_id].to_i, params[:id].to_i])
+
+    redirect to '/admin'
+  end
+
+  delete '/admin/products/:id' do
+    redirect to '/unauthorized' unless admin_user?
+
+    db_conn.execute('DELETE FROM products WHERE id = ?', params[:id].to_i)
+    redirect to '/admin'
+  end
+
+  get '/users/:id' do
+    redirect to '/' unless logged_in?
+
+    @user = db_conn.execute('SELECT * FROM users WHERE id = ?', params[:id]).first
+    halt 404, "Couldn't find the user" unless @user
+
+    erb :'users/show'
   end
 end

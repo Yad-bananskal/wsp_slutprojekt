@@ -1,0 +1,37 @@
+<h1>Din Kundvagn</h1>
+
+<% if @cart_items.any? %>
+  <table class="cart-table">
+    <thead>
+      <tr>
+        <th>Produkt</th>
+        <th>Pris</th>
+        <th>Antal</th>
+        <th>Totalt</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @cart_items.each do |item| %>
+        <tr>
+          <td><%= item['name'] %></td>
+          <td><%= item['price'] %> SEK</td>
+          <td><%= item['quantity'] %></td>
+          <td><%= item['price'] * item['quantity'] %> SEK</td>
+        </tr>
+      <% end %>
+      <tr class="cart-total">
+        <td colspan="3"><strong>Totalt:</strong></td>
+        <td><strong><%= @total %> SEK</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="cart-actions">
+    <form action="/cart/checkout" method="post">
+      <button type="submit" class="checkout-button">Köp</button>
+    </form>
+  </div>
+<% else %>
+  <p>Din kundvagn är tom</p>
+  <a href="/shop" class="back-button">Tillbaka till butiken</a>
+<% end %>
