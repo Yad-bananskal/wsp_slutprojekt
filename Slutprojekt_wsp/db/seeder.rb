@@ -48,8 +48,6 @@ class Seeder
                   quantity INTEGER NOT NULL DEFAULT 1,
                   FOREIGN KEY(cart_id) REFERENCES carts(id) ON DELETE CASCADE,
                   FOREIGN KEY(product_id) REFERENCES products(id))')
-
-    p "All tables created."
   end
 
   def self.populate_tables
@@ -69,7 +67,6 @@ class Seeder
 
     ['Avgassystem', 'Fälgar', 'Däck'].each do |category_name|
       db.execute('INSERT INTO categories (name) VALUES (?)', [category_name])
-      p "Inserted category #{category_name}"
     end
 
     products = [
@@ -83,8 +80,6 @@ class Seeder
                  [p[:name], p[:description], p[:price], p[:stock], p[:category_id]])
       p "Added product #{p[:name]}"
     end
-
-    p "Finished populating data."
   end
 
   private
