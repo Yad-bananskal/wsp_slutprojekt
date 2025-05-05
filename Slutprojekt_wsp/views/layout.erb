@@ -17,17 +17,14 @@
         <% if logged_in? %>
           <a href="/cart" class="nav-button cart-button">
             Kundvagn
-            <% if total_cart_items > 0 %>
-              <span class="cart-count"><%= total_cart_items %></span>
-            <% end %>
           </a>
 
           <% if admin_user? %>
-            <a href="/admin" class="nav-button">Admin</a>
+            <a href="/admin" class="nav-button">Adminpanel</a>
           <% end %>
 
-          <a href="/users/<%= current_user['id'] %>" class="nav-button">
-            <%= current_user['username'] %>
+          <a href="/users/<%= current_user.id %>" class="nav-button">
+            <%= current_user.username %>
           </a>
           <form action="/logout" method="post" style="display:inline;">
             <button class="nav-button" style="background:none; border:none; cursor:pointer;">Logga ut</button>

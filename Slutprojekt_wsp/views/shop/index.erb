@@ -1,17 +1,17 @@
 <h1>Produkter</h1>
 <% if @category %>
-  <h2>Kategori: <%= @category['name'] %></h2>
+  <h2>Kategori: <%= @category.name %></h2>
 <% end %>
 
 <div class="product-list">
   <% @products.each do |product| %>
     <div class="product-card">
-      <h3><a href="/shop/<%= product['id'] %>"><%= product['name'] %></a></h3>
-      <p><%= product['description'] %></p>
-      <p><strong><%= product['price'] %> kr</strong></p>
+      <h3><a href="/shop/<%= product.id %>"><%= product.name %></a></h3>
+      <p><%= product.description %></p>
+      <p><strong><%= product.price %> kr</strong></p>
       
       <% if logged_in? %>
-        <form action="/cart/add/<%= product['id'] %>" method="POST">
+        <form action="/cart/add/<%= product.id %>" method="POST">
           <button type="submit">Lägg till i kundvagn</button>
         </form>
       <% else %>

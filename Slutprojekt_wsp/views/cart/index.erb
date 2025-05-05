@@ -8,20 +8,27 @@
         <th>Pris</th>
         <th>Antal</th>
         <th>Totalt</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       <% @cart_items.each do |item| %>
         <tr>
-          <td><%= item['name'] %></td>
-          <td><%= item['price'] %> SEK</td>
-          <td><%= item['quantity'] %></td>
-          <td><%= item['price'] * item['quantity'] %> SEK</td>
+          <td><%= item[:product].name %></td>
+          <td><%= item[:product].price %> SEK</td>
+          <td><%= item[:quantity] %></td>
+          <td><%= item[:product].price * item[:quantity] %> SEK</td>
+          <td>
+            <form action="/cart/remove/<%= item[:product].id %>" method="POST">
+              <button type="submit" class="remove-btn">Ta bort</button>
+            </form>
+          </td>
         </tr>
       <% end %>
       <tr class="cart-total">
         <td colspan="3"><strong>Totalt:</strong></td>
-        <td><strong><%= @total %> SEK</strong></td>
+        <td><strong><%= @total_price %> SEK</strong></td>
+        <td></td>
       </tr>
     </tbody>
   </table>

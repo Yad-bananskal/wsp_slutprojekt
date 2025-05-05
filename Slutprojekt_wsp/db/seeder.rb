@@ -12,7 +12,6 @@ class Seeder
   def self.drop_tables
     ['cart_items', 'carts', 'products', 'categories', 'users'].each do |table|
       db.execute("DROP TABLE IF EXISTS #{table}")
-      p "Dropped table #{table}"
     end
   end
 
@@ -60,7 +59,6 @@ class Seeder
 
     users.each do |u|
       hashed_pw = BCrypt::Password.create(u[:password])
-      p "Saving user #{u[:username]} with hashed password."
       db.execute('INSERT INTO users (username, password_digest, role) VALUES (?, ?, ?)', 
                  [u[:username], hashed_pw, u[:role]])
     end
@@ -78,7 +76,6 @@ class Seeder
     products.each do |p|
       db.execute('INSERT INTO products (name, description, price, stock, category_id) VALUES (?, ?, ?, ?, ?)', 
                  [p[:name], p[:description], p[:price], p[:stock], p[:category_id]])
-      p "Added product #{p[:name]}"
     end
   end
 

@@ -1,6 +1,6 @@
 <div class="admin-container">
   <h1>Adminpanel</h1>
-  <p class="admin-welcome">Välkommen <strong><%= @current_user['username'] %></strong></p>
+  <p class="admin-welcome">Välkommen <strong><%= @current_user.username %></strong></p>
   
   <div class="admin-actions">
     <a href="/admin/products/new" class="admin-btn">Lägg till ny produkt</a>
@@ -13,14 +13,14 @@
     <% @products.each do |product| %>
       <div class="admin-product-card">
         <div class="product-info">
-          <h3><%= product['name'] %></h3>
-          <p><%= product['price'] %> kr</p>
-          <p>Lager: <%= product['stock'] %></p>
+          <h3><%= product.name %></h3>
+          <p><%= product.price %> kr</p>
+          <p>Lager: <%= product.stock %></p>
         </div>
         
         <div class="product-actions">
-          <a href="/admin/products/<%= product['id'] %>/edit" class="edit-btn">Redigera</a>
-          <form action="/admin/products/<%= product['id'] %>" method="POST">
+          <a href="/admin/products/<%= product.id %>/edit" class="edit-btn">Redigera</a>
+          <form action="/admin/products/<%= product.id %>" method="POST">
             <input type="hidden" name="_method" value="DELETE">
             <button type="submit" class="delete-btn">Radera</button>
           </form>
